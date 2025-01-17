@@ -1,0 +1,33 @@
+[project]
+name = "deepemailvalidator"
+version = "0.1.0"
+description = ""
+authors = [
+    { name = "Oleh Ohiichuk", email = "chaotichoice@gmail.com" }
+]
+readme = "README.md"
+requires-python = ">=3.12, <4"
+dependencies = [
+    "requests (==2.32.3)",
+    "loguru (==0.7.3)",
+    "python-dotenv (==1.0.1)",
+    "pydantic (==2.10.5)",
+    "pysocks (==1.7.1)",
+    "dnspython (==2.7.0)",
+    "email-validator (==2.2.0)",
+    "pytz (==2024.2)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.poetry]
+package-mode = false
+
+
+[tool.mypy]
+strict = true
+ignore_missing_imports = true
