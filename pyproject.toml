@@ -15,7 +15,8 @@ dependencies = [
     "pysocks (==1.7.1)",
     "dnspython (==2.7.0)",
     "email-validator (==2.2.0)",
-    "pytz (==2024.2)"
+    "pytz (==2024.2)",
+    "pydantic-settings (==2.7.1)"
 ]
 
 [tool.poetry.group.dev.dependencies]
