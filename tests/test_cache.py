@@ -1,4 +1,4 @@
-from src.cache import CacheBase
+from src.utils.cache import CacheBase
 from tests.fixtures import temp_cache_dir
 
 

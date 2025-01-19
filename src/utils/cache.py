@@ -2,6 +2,7 @@
 
 import os
 import json
+from typing import Any
 
 from loguru import logger
 
@@ -53,7 +54,7 @@ class CacheBase:
         logger.debug(f"Getting key '{key}': {value}")
         return value
 
-    def set(self, key: str, value: str) -> None:
+    def set(self, key: str, value: Any) -> None:
         """
         Sets a value in the cache with the specified key.
 

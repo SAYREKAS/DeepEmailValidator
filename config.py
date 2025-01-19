@@ -4,19 +4,11 @@ import os.path
 from typing import Self
 from urllib.parse import urlparse
 
-from pydantic import model_validator, Field
+from pydantic import BaseModel, model_validator, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class ProxyParser(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file=os.path.join(os.path.dirname(__file__), ".env"),
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-        env_prefix="APP__PROXY__",
-        env_nested_delimiter="__",
-    )
-
+class ProxyParser(BaseModel):  # type: ignore
     url: str = Field(description="An expected format: 'protocol://username:password@proxy.example.com:8443'")
     protocol: str | None = None
     username: str | None = None
@@ -24,15 +16,15 @@ class ProxyParser(BaseSettings):
     server: str | None = None
     port: int | None = None
 
-    @model_validator(mode="after")
+    @model_validator(mode="after")  # type: ignore
     def validate_url(self) -> Self:
         """Validate URL and parse its components"""
 
         parsed_url = urlparse(self.url)
 
         # Protocol validation
-        if parsed_url.scheme not in ["http", "https"]:
-            raise ValueError("URL must start with http:// or https://")
+        if parsed_url.scheme not in ["http", "https", "socks5"]:
+            raise ValueError("URL must start with http:// or https:// or socks5://")
         self.protocol = parsed_url.scheme
 
         # Server validation
@@ -56,3 +48,17 @@ class ProxyParser(BaseSettings):
             raise ValueError("USERNAME must be provided if PASSWORD is set")
 
         return self
+
+
+class Settings(BaseSettings):  # type: ignore
+    model_config = SettingsConfigDict(
+        env_file=os.path.join(os.path.dirname(__file__), ".env"),
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        env_prefix="APP__",
+        env_nested_delimiter="__",
+    )
+    proxy: ProxyParser = Field(description="Proxy settings")
+
+
+settings = Settings()
