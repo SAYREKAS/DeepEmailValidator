@@ -6,6 +6,10 @@ import socket
 from loguru import logger
 from pydantic import BaseModel, Field
 
+from config import configure_logger
+
+configure_logger("smtp_checker.log")
+
 
 class ResolvedIPs(BaseModel):  # type: ignore
     v4: str = Field(default="")
@@ -35,14 +39,14 @@ def resolve_server_ip(domain: str, port: int = 25) -> ResolvedIPs:
         addr_info_v4 = socket.getaddrinfo(domain, port, socket.AF_INET, socket.SOCK_STREAM)
         result.v4 = addr_info_v4[0][4][0]
     except socket.gaierror as e:
-        logger.warning("Failed to resolve IPv4 for domain '{}': {}", domain, str(e))
+        logger.debug("Failed to resolve IPv4 for domain '{}': {}", domain, str(e))
 
     try:
         # IPv6
         addr_info_v6 = socket.getaddrinfo(domain, port, socket.AF_INET6, socket.SOCK_STREAM)
         result.v6 = addr_info_v6[0][4][0]
     except socket.gaierror as e:
-        logger.warning("Failed to resolve IPv6 for domain '{}': {}", domain, str(e))
+        logger.debug("Failed to resolve IPv6 for domain '{}': {}", domain, str(e))
 
     logger.debug("Resolved IP addresses for domain '{}': {}", domain, result)
     return result
@@ -72,13 +76,13 @@ class SMTPChecker:
 
             # Testing the success of the HELO team. Usually responds with code 250.
             if code != 250:
-                logger.error("HELO EHLO error: {}", message)
+                logger.debug("HELO EHLO error: {}", message)
                 return False
 
             return True
 
         except smtplib.SMTPException as e:
-            logger.error("Error during HELO command: {}", str(e))
+            logger.debug("Error during HELO command: {}", str(e))
             return False
 
     @staticmethod
@@ -92,13 +96,12 @@ class SMTPChecker:
 
             # Checking the success of the MAIL FROM command
             if code != 250:
-                logger.error("MAIL FROM error: {}", message)
                 return False
 
             return True
 
         except smtplib.SMTPException as e:
-            logger.error("MAIL FROM command failed: {}", str(e))
+            logger.debug("MAIL FROM command failed: {}", str(e))
             return False
 
     @staticmethod
@@ -114,23 +117,23 @@ class SMTPChecker:
             if code != 250:
                 # Additional logging for different types of blocking
                 if "spamhaus" in str(message).lower():
-                    logger.warning("Blocked by Spamhaus: {}", message)
+                    logger.debug("Blocked by Spamhaus: {}", message)
 
                 elif "banned sending ip" in str(message).lower():
-                    logger.warning("Banned sending IP: {}", message)
+                    logger.debug("Banned sending IP: {}", message)
 
                 elif "blocked - see https://ipcheck.proofpoint" in str(message).lower():
-                    logger.warning("Banned sending IP (ProofPoint): {}", message)
+                    logger.debug("Banned sending IP (ProofPoint): {}", message)
 
                 else:
-                    logger.error("RCPT TO error: {}", message)
+                    logger.debug("RCPT TO error: {}", message)
 
                 return False
 
             return True
 
         except smtplib.SMTPException as e:
-            logger.error("RCPT TO command failed: {}", str(e))
+            logger.debug("RCPT TO command failed: {}", str(e))
             return False
 
     def requests(self, mx_server: str, email: str, domain: str, rcpt_to: bool = False) -> bool:
@@ -158,13 +161,16 @@ class SMTPChecker:
                 if rcpt_to and not self._send_rcpt_to_command(server=server, email_address=email):
                     return False
 
-                logger.success("SMTP validation completed successfully")
+                logger.debug("SMTP validation completed successfully")
                 return True
 
         except smtplib.SMTPException as e:
-            logger.error("SMTP validation failed: {}", str(e))
+            logger.debug("SMTP validation failed: {}", str(e))
             return False
 
         except TimeoutError:
-            logger.error("SMTP request timed out")
+            logger.debug("SMTP request timed out")
             return False
+
+
+smtp_checker = SMTPChecker()
