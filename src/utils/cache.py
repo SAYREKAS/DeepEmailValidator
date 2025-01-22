@@ -2,20 +2,22 @@
 
 import os
 import json
-from typing import Any
 
 from loguru import logger
 
 
-class CacheBase:
+class CacheBase[T]:
     """Base class for handling JSON-based cache storage."""
 
     def __init__(self, filename: str = "cache.json", cache_dir: str = "cache") -> None:
         self.filename = filename
         self.cache_dir = cache_dir
+        self.cache: dict[str, T] = {}
+
         self.cache_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.cache_dir)
         if not os.path.exists(self.cache_path):
             os.makedirs(self.cache_path)
+
         self.__load_cache()
 
     def __repr__(self) -> str:
@@ -29,9 +31,10 @@ class CacheBase:
         cache_file = os.path.join(self.cache_path, self.filename)
         try:
             with open(cache_file) as file:
-                self.__cache = json.load(file)
+                self.__cache: dict[str, T] = json.load(file)
+
         except (FileNotFoundError, json.JSONDecodeError):
-            self.__cache = {}
+            self.__cache: dict[str, T] = {}
 
     def __save_cache(self) -> None:
         """
@@ -42,7 +45,7 @@ class CacheBase:
         with open(cache_file, "w") as file:
             json.dump(self.__cache, file)
 
-    def get(self, key: str) -> str | None:
+    def get(self, key: str) -> T | None:
         """
         Retrieves a value from the cache by key.
 
@@ -50,11 +53,11 @@ class CacheBase:
         :return: The value associated with the key, or None if the key does not exist.
         """
 
-        value: str | None = self.__cache.get(key)
+        value: T | None = self.__cache.get(key)
         logger.debug(f"Getting key '{key}': {value}")
         return value
 
-    def set(self, key: str, value: Any) -> None:
+    def set(self, key: str, value: T) -> None:
         """
         Sets a value in the cache with the specified key.
 
@@ -85,42 +88,42 @@ class CacheBase:
         return size
 
 
-class MXCache(CacheBase):
+class MXCache(CacheBase[list[str]]):
     """Cache for storing MX record data."""
 
     def __init__(self, filename: str = "mx_cache.json"):
         super().__init__(filename=filename)
 
 
-class SPFCache(CacheBase):
+class SPFCache(CacheBase[str]):
     """Cache for storing SPF record data."""
 
     def __init__(self, filename: str = "spf_cache.json"):
         super().__init__(filename=filename)
 
 
-class DKIMCache(CacheBase):
+class DKIMCache(CacheBase[str]):
     """Cache for storing DKIM record data."""
 
     def __init__(self, filename: str = "dkim_cache.json"):
         super().__init__(filename=filename)
 
 
-class DMARCCache(CacheBase):
+class DMARCCache(CacheBase[str]):
     """Cache for storing DMARC record data."""
 
     def __init__(self, filename: str = "dmarc_cache.json"):
         super().__init__(filename=filename)
 
 
-class CatchAllCache(CacheBase):
+class CatchAllCache(CacheBase[bool]):
     """Cache for storing catch-all domain status data."""
 
     def __init__(self, filename: str = "catchall_cache.json"):
         super().__init__(filename=filename)
 
 
-class MXAvailabilityCache(CacheBase):
+class MXAvailabilityCache(CacheBase[list[str]]):
     """Cache for storing MX server availability data."""
 
     def __init__(self, filename: str = "mx_availability_cache.json"):
