@@ -10,38 +10,35 @@ class CacheBase[T]:
     """Base class for handling JSON-based cache storage."""
 
     def __init__(self, filename: str = "cache.json", cache_dir: str = "cache") -> None:
-        self.filename = filename
-        self.cache_dir = cache_dir
-        self.cache: dict[str, T] = {}
+        self._filename = filename
+        self._cache_dir = cache_dir
+        self._cache: dict[str, T] = {}
 
-        self.cache_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.cache_dir)
-        if not os.path.exists(self.cache_path):
-            os.makedirs(self.cache_path)
+        self._cache_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), self._cache_dir)
+        if not os.path.exists(self._cache_path):
+            os.makedirs(self._cache_path)
 
         self.__load_cache()
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__} size: {self.size}"
 
     def __load_cache(self) -> None:
         """
         Loads the cache from the JSON file if it exists, otherwise initializes an empty cache.
         """
 
-        cache_file = os.path.join(self.cache_path, self.filename)
+        cache_file = os.path.join(self._cache_path, self._filename)
         try:
             with open(cache_file) as file:
-                self.__cache: dict[str, T] = json.load(file)
+                self.__cache = json.load(file)
 
         except (FileNotFoundError, json.JSONDecodeError):
-            self.__cache: dict[str, T] = {}
+            self.__cache = {}
 
     def __save_cache(self) -> None:
         """
         Saves the current cache to the JSON file.
         """
 
-        cache_file = os.path.join(self.cache_path, self.filename)
+        cache_file = os.path.join(self._cache_path, self._filename)
         with open(cache_file, "w") as file:
             json.dump(self.__cache, file)
 
